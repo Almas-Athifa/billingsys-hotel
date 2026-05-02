@@ -16,7 +16,7 @@ const AdminDashboard = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const BASE_URL = import.meta.env.VITE_API_URL;
         const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
         const { data } = await axios.get(`${BASE_URL}/api/orders/stats`, config);
         setStats(data);
@@ -163,7 +163,7 @@ const AdminDashboard = () => {
                 {stats.lowStockItems?.map((item, index) => (
                   <tr key={index} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 flex items-center">
-                      <img src={`http://localhost:5000${item.image}`} className="w-8 h-8 rounded-md mr-3 object-cover border" alt={item.name} />
+                      <img src={`${BASE_URL}${item.image}`} className="w-8 h-8 rounded-md mr-3 object-cover border" alt={item.name} />
                       {item.name}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-bold">

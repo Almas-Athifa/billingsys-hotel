@@ -12,7 +12,7 @@ const Orders = () => {
     const fetchOrders = async () => {
       try {
         const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
-        const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const BASE_URL = import.meta.env.VITE_API_URL;
         const { data } = await axios.get(`${BASE_URL}/api/orders`, config);
         setOrders(data);
       } catch (error) {

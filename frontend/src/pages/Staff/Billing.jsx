@@ -5,7 +5,7 @@ import { LogOut, Search, Plus, Minus, Printer, Trash2, ShoppingBag, Scale } from
 import { useNavigate } from 'react-router-dom';
 import jsPDF from 'jspdf';
 
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const BASE_URL = import.meta.env.VITE_API_URL;
 
 const Billing = () => {
   const [products, setProducts]         = useState([]);
