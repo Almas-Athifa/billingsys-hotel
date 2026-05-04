@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import AdminLayout from '../../components/AdminLayout';
 import { IndianRupee, ShoppingBag, TrendingUp, Package, AlertTriangle, Users, BarChart3, Clock, Wallet } from 'lucide-react';
+import { FALLBACK_IMAGE, getImageUrl } from '../../utils/imageUrl';
+
+const BASE_URL = import.meta.env.VITE_API_URL;
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({
@@ -16,7 +19,6 @@ const AdminDashboard = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const BASE_URL = import.meta.env.VITE_API_URL;
         const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
         const { data } = await axios.get(`${BASE_URL}/api/orders/stats`, config);
         setStats(data);
@@ -163,7 +165,12 @@ const AdminDashboard = () => {
                 {stats.lowStockItems?.map((item, index) => (
                   <tr key={index} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 flex items-center">
-                      <img src={`${BASE_URL}${item.image}`} className="w-8 h-8 rounded-md mr-3 object-cover border" alt={item.name} />
+                      <img
+                        src={getImageUrl(item.image, BASE_URL)}
+                        className="w-8 h-8 rounded-md mr-3 object-cover border"
+                        alt={item.name}
+                        onError={(e) => { e.target.src = FALLBACK_IMAGE; }}
+                      />
                       {item.name}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-bold">

@@ -6,6 +6,7 @@ import {
   Trash2, CheckCircle, PlusCircle, Edit2,
   X, FolderOpen, Upload
 } from 'lucide-react';
+import { FALLBACK_IMAGE, getImageUrl } from '../../utils/imageUrl';
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -68,13 +69,13 @@ const Products = () => {
         if (data.found) {
           // ✅ Local folder image found
           setAutoImagePath(data.imagePath);
-          setImagePreview(`${BASE_URL}${data.imagePath}`);
+          setImagePreview(getImageUrl(data.imagePath, BASE_URL));
           setImageSource('folder');
         } else {
           // ❌ Not found in folder — need upload
           setImageSource('upload');
           // Show default image as preview placeholder
-          setImagePreview(`${BASE_URL}${data.imagePath}`);
+          setImagePreview(getImageUrl(data.imagePath, BASE_URL));
         }
       } catch (err) {
         console.error(err);
@@ -104,7 +105,7 @@ const Products = () => {
       unit: prod.unit || 'piece'
     });
     if (prod.image) {
-      setImagePreview(`${BASE_URL}${prod.image}`);
+      setImagePreview(getImageUrl(prod.image, BASE_URL));
       setImageSource('upload'); // Prevents folder detection UI flash if it's already uploaded
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -414,10 +415,10 @@ const Products = () => {
               <tr key={prod._id} className="hover:bg-gray-50 transition">
                 <td className="px-6 py-4">
                   <img
-                    src={prod.image ? `${BASE_URL}${prod.image}` : `${BASE_URL}/uploads/default.jpg`}
+                    src={getImageUrl(prod.image, BASE_URL)}
                     alt={prod.name}
                     className="h-12 w-12 object-cover rounded-lg border shadow-sm"
-                    onError={(e) => { e.target.src = `${BASE_URL}/uploads/default.jpg`; }}
+                    onError={(e) => { e.target.src = FALLBACK_IMAGE; }}
                   />
                 </td>
                 <td className="px-6 py-4 text-sm font-medium text-gray-800">{prod.name}</td>

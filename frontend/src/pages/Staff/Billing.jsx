@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 import { LogOut, Search, Plus, Minus, Printer, Trash2, ShoppingBag, Scale } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import jsPDF from 'jspdf';
+import { FALLBACK_IMAGE, getImageUrl } from '../../utils/imageUrl';
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -250,10 +251,10 @@ const Billing = () => {
               >
                 <div className="relative w-24 h-24 mb-3">
                   <img
-                    src={product.image ? `${BASE_URL}${product.image}` : `${BASE_URL}/uploads/default.jpg`}
+                    src={getImageUrl(product.image, BASE_URL)}
                     alt={product.name}
                     className="w-full h-full object-cover rounded-lg border"
-                    onError={(e) => { e.target.src = `${BASE_URL}/uploads/default.jpg`; }}
+                    onError={(e) => { e.target.src = FALLBACK_IMAGE; }}
                   />
                   {isOut && (
                     <div className="absolute inset-0 bg-white/70 flex items-center justify-center rounded-lg">

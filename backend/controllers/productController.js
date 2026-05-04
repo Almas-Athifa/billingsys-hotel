@@ -1,6 +1,7 @@
 const Product = require('../models/Product');
 const path    = require('path');
 const fs      = require('fs');
+const cloudinary = require('../config/cloudinary');
 
 const UPLOADS_DIR  = path.join(__dirname, '../uploads');
 const DEFAULT_IMG  = '/uploads/default.jpg';
@@ -25,6 +26,27 @@ const findLocalImage = (baseName) => {
     }
   }
   return null;
+};
+
+const uploadToCloudinary = (file, productName) => {
+  if (!file?.buffer) return Promise.resolve(null);
+
+  return new Promise((resolve, reject) => {
+    const publicId = `${toFileName(productName)}-${Date.now()}`;
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: 'billingsystem/products',
+        public_id: publicId,
+        resource_type: 'image',
+      },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result.secure_url);
+      }
+    );
+
+    stream.end(file.buffer);
+  });
 };
 
 /* ──────────────────────────────────────────────────────
@@ -96,7 +118,7 @@ const createProduct = async (req, res) => {
     if (localPath) {
       image = localPath;                              // auto-assigned
     } else if (req.file) {
-      image = `/uploads/${req.file.filename}`;        // manual upload
+      image = await uploadToCloudinary(req.file, name); // manual upload
     } else {
       image = DEFAULT_IMG;                            // default fallback
     }
@@ -125,7 +147,7 @@ const updateProduct = async (req, res) => {
     if (unit) product.unit = unit;
 
     if (req.file) {
-      product.image = `/uploads/${req.file.filename}`;
+      product.image = await uploadToCloudinary(req.file, product.name);
     } else if (name) {
       const local = findLocalImage(toFileName(name));
       if (local) product.image = local;
