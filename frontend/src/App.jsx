@@ -9,6 +9,7 @@ import Categories from './pages/Admin/Categories';
 import Staff from './pages/Admin/Staff';
 import Orders from './pages/Admin/Orders';
 import Billing from './pages/Staff/Billing';
+import StaffBills from './pages/Staff/Bills';
 import PrivateRoute from './components/PrivateRoute';
 
 function App() {
@@ -31,6 +32,7 @@ function App() {
         {/* Staff Routes */}
         <Route path="/staff" element={<PrivateRoute role="Staff" />}>
           <Route path="billing" element={<Billing />} />
+          <Route path="bills" element={<StaffBills />} />
         </Route>
       </Routes>
     </Router>

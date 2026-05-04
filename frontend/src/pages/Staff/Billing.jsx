@@ -3,7 +3,6 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import { LogOut, Search, Plus, Minus, Printer, Trash2, ShoppingBag, Scale } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import jsPDF from 'jspdf';
 import { FALLBACK_IMAGE, getImageUrl } from '../../utils/imageUrl';
 
 const BASE_URL = import.meta.env.VITE_API_URL;
@@ -186,57 +185,15 @@ const Billing = () => {
 
       const { data } = await axios.post(`${BASE_URL}/api/orders`, orderPayload, config);
 
-      generatePDF(data);
-      toast.success('Bill Generated & Stock Updated!');
+      toast.success('Bill saved successfully!');
       setCart([]);
       setCustomerName('');
       setCustomerPhone('');
       fetchProducts(); // refresh stock
+      navigate('/staff/bills', { state: { latestBillId: data._id } });
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to generate bill');
     }
-  };
-
-  const generatePDF = (orderData) => {
-    const doc = new jsPDF();
-    doc.setFontSize(18);
-    doc.text('Food POS Receipt', 105, 18, null, null, 'center');
-    doc.setFontSize(10);
-    doc.text(`Bill No: ${orderData.billNumber}`, 14, 28);
-    doc.text(`Date: ${new Date().toLocaleString()}`, 14, 34);
-    let y = 50;
-    if (customerName.trim() && customerPhone.trim()) {
-      doc.text(`Customer: ${customerName.trim()} (${customerPhone.trim()})`, 14, 40);
-      doc.text(`Payment: ${paymentMethod}`, 14, 46);
-      y = 56;
-    } else {
-      doc.text(`Payment: ${paymentMethod}`, 14, 40);
-    }
-
-    doc.setFontSize(11);
-    doc.text('Item',     14, y);
-    doc.text('Qty',      110, y);
-    doc.text('Rate',     140, y);
-    doc.text('Amount',   175, y);
-    doc.setLineWidth(0.3);
-    doc.line(14, y + 2, 195, y + 2);
-    y += 10;
-
-    cart.forEach(item => {
-      const qty = parseFloat(item.quantity) || 0;
-      const qtyLabel = item.unit === 'kg' ? `${qty} kg` : `${qty} pc`;
-      doc.text(item.name,                  14,  y);
-      doc.text(qtyLabel,                   110, y);
-      doc.text(`Rs. ${item.price}`,        140, y);
-      doc.text(`Rs. ${(item.price * qty).toFixed(2)}`, 175, y);
-      y += 8;
-    });
-
-    doc.line(14, y, 195, y);
-    y += 8;
-    doc.setFontSize(13);
-    doc.text(`Total: Rs. ${totalAmount}`, 175, y, null, null, 'right');
-    doc.save(`receipt-${Date.now()}.pdf`);
   };
 
   return (
@@ -246,12 +203,20 @@ const Billing = () => {
       <div className="flex-1 p-6 flex flex-col">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-800">HOTEL BILLING</h1>
-          <button
-            onClick={() => { localStorage.removeItem('userInfo'); navigate('/login'); }}
-            className="flex items-center text-red-500 hover:text-red-700 bg-red-50 px-4 py-2 rounded-lg text-sm"
-          >
-            <LogOut size={16} className="mr-2" /> Logout
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => navigate('/staff/bills')}
+              className="flex items-center text-blue-600 hover:text-blue-700 bg-blue-50 px-4 py-2 rounded-lg text-sm"
+            >
+              <Printer size={16} className="mr-2" /> View Bills
+            </button>
+            <button
+              onClick={() => { localStorage.removeItem('userInfo'); navigate('/login'); }}
+              className="flex items-center text-red-500 hover:text-red-700 bg-red-50 px-4 py-2 rounded-lg text-sm"
+            >
+              <LogOut size={16} className="mr-2" /> Logout
+            </button>
+          </div>
         </div>
 
         <div className="relative mb-5">
@@ -434,7 +399,7 @@ const Billing = () => {
             onClick={handleGenerateBill}
             className="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition shadow-lg"
           >
-            <Printer size={18} /> Generate Bill & Print
+            <Printer size={18} /> Generate Bill
           </button>
         </div>
       </div>

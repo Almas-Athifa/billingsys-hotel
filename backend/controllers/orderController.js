@@ -115,6 +115,49 @@ const getOrders = async (req, res) => {
   res.json(orders);
 };
 
+const getMyOrders = async (req, res) => {
+  const orders = await Order.find({ staff: req.user._id })
+    .populate('staff', 'name email')
+    .sort({ createdAt: -1 });
+  res.json(orders);
+};
+
+const updateOrder = async (req, res) => {
+  const { customerName, customerPhone, paymentMethod, status } = req.body;
+  const order = await Order.findById(req.params.id);
+
+  if (!order) {
+    return res.status(404).json({ message: 'Order not found' });
+  }
+
+  order.customerName = customerName?.trim() || undefined;
+  order.customerPhone = customerPhone?.trim() || undefined;
+  if (paymentMethod) order.paymentMethod = paymentMethod;
+  if (status) order.status = status;
+
+  const hasCustomerDetails = Boolean(order.customerName && order.customerPhone);
+  if (hasCustomerDetails) {
+    let customer = await Customer.findOne({ phone: order.customerPhone });
+    if (customer) {
+      customer.name = order.customerName;
+      await customer.save();
+    } else {
+      customer = await Customer.create({
+        name: order.customerName,
+        phone: order.customerPhone,
+        visitCount: 1,
+        totalSpent: order.totalAmount
+      });
+    }
+    order.customer = customer._id;
+  } else {
+    order.customer = undefined;
+  }
+
+  const updatedOrder = await order.save();
+  res.json(updatedOrder);
+};
+
 /* ─────────────────────────────────────────────
    Helper: Get Time Slot
 ───────────────────────────────────────────── */
@@ -232,4 +275,4 @@ const getDashboardStats = async (req, res) => {
   }
 };
 
-module.exports = { addOrderItems, getOrders, getDashboardStats };
+module.exports = { addOrderItems, getOrders, getMyOrders, updateOrder, getDashboardStats };

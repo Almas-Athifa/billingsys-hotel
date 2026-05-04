@@ -17,7 +17,7 @@ const AdminLayout = ({ children }) => {
             <LayoutDashboard size={20} /><span>Dashboard</span>
           </Link>
           <Link to="/admin/orders" className="flex items-center space-x-2 p-3 text-gray-700 hover:bg-gray-100 rounded-lg">
-            <FileText size={20} /><span>Orders</span>
+            <FileText size={20} /><span>View Bills</span>
           </Link>
           <Link to="/admin/products" className="flex items-center space-x-2 p-3 text-gray-700 hover:bg-gray-100 rounded-lg">
             <Package size={20} /><span>Products</span>
