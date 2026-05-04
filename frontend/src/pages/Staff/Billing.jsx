@@ -389,18 +389,18 @@ const Billing = () => {
           
           {/* Customer Details */}
           <div className="bg-white p-3 rounded-xl border border-gray-200">
-            <p className="text-xs font-semibold text-gray-500 uppercase mb-2 tracking-wider">Customer Details</p>
+            <p className="text-xs font-semibold text-gray-500 uppercase mb-2 tracking-wider">Customer Details <span className="text-gray-400">(Optional)</span></p>
             <div className="space-y-2">
               <input 
                 type="text" 
-                placeholder="Phone Number (10 digits)"
+                placeholder="Phone Number (optional)"
                 value={customerPhone}
                 onChange={(e) => setCustomerPhone(e.target.value)}
                 className="w-full border px-3 py-2 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-400"
               />
               <input 
                 type="text" 
-                placeholder="Customer Name"
+                placeholder="Customer Name (optional)"
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
                 className="w-full border px-3 py-2 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-400"
