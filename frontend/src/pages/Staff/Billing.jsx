@@ -75,7 +75,7 @@ const Billing = () => {
         product:  product._id,
         name:     product.name,
         price:    product.price,
-        quantity: Math.min(1, product.quantity), // Default to 1 kg or max stock
+        quantity: Math.min(0.5, product.quantity), // Default to 0.5 kg or max stock
         unit:     'kg',
         maxStock: product.quantity
       }]);
@@ -309,7 +309,7 @@ const Billing = () => {
                   <div className="flex items-center gap-2">
                     <input
                       type="number"
-                      step="0.01"
+                      step="0.5"
                       min="0"
                       max={item.maxStock}
                       value={item.quantity}
