@@ -118,6 +118,14 @@ const Billing = () => {
   };
 
   /* ── kg quantity update ── */
+  const formatKgQuantity = (qty) => Number(qty.toFixed(2));
+  const snapKgQuantity = (qty, maxStock) => {
+    const minQty = Math.min(0.5, maxStock);
+    if (!qty || qty <= 0) return minQty;
+    const snapped = Math.round(qty * 2) / 2;
+    return formatKgQuantity(Math.min(maxStock, Math.max(minQty, snapped)));
+  };
+
   const updateKgQuantity = (item, val) => {
     if (val === '') {
       setCart(cart.map(x => x.product === item.product ? { ...x, quantity: '' } : x));
@@ -130,6 +138,18 @@ const Billing = () => {
       return;
     }
     setCart(cart.map(x => x.product === item.product ? { ...x, quantity: val } : x));
+  };
+
+  const normalizeKgQuantity = (item) => {
+    const qty = parseFloat(item.quantity);
+    const normalizedQty = snapKgQuantity(qty, item.maxStock);
+    setCart(cart.map(x => x.product === item.product ? { ...x, quantity: normalizedQty } : x));
+  };
+
+  const adjustKgQuantity = (item, delta) => {
+    const currentQty = parseFloat(item.quantity) || 0;
+    const nextQty = snapKgQuantity(currentQty + delta, item.maxStock);
+    setCart(cart.map(x => x.product === item.product ? { ...x, quantity: nextQty } : x));
   };
 
   const removeFromCart = (id) => setCart(cart.filter(x => x.product !== id));
@@ -307,16 +327,23 @@ const Billing = () => {
                 /* KG item — inline decimal input */
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
+                    <button type="button" onClick={() => adjustKgQuantity(item, -0.5)} className="p-1 bg-white rounded-lg border shadow-sm hover:text-red-500">
+                      <Minus size={14} />
+                    </button>
                     <input
                       type="number"
                       step="0.5"
-                      min="0"
+                      min="0.5"
                       max={item.maxStock}
                       value={item.quantity}
                       onChange={(e) => updateKgQuantity(item, e.target.value)}
+                      onBlur={() => normalizeKgQuantity(item)}
                       placeholder="kg"
                       className="w-20 border border-gray-300 px-2 py-1 rounded-lg text-sm text-center outline-none focus:ring-2 focus:ring-purple-500 transition"
                     />
+                    <button type="button" onClick={() => adjustKgQuantity(item, 0.5)} className="p-1 bg-white rounded-lg border shadow-sm hover:text-blue-500">
+                      <Plus size={14} />
+                    </button>
                     <span className="text-sm font-medium text-purple-700">kg</span>
                   </div>
                   <span className="text-sm font-bold text-gray-800">
