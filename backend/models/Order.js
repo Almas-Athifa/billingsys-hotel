@@ -3,8 +3,8 @@ const mongoose = require('mongoose');
 const orderSchema = mongoose.Schema({
   billNumber:    { type: String, required: true, unique: true },
   customer:      { type: mongoose.Schema.Types.ObjectId, ref: 'Customer' },
-  customerName:  { type: String, required: true },
-  customerPhone: { type: String, required: true },
+  customerName:  { type: String },
+  customerPhone: { type: String },
   staff:         { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   items: [
     {

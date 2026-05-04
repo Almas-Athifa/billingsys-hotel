@@ -28,13 +28,10 @@ const generateBillNumber = async () => {
 ───────────────────────────────────────────── */
 const addOrderItems = async (req, res) => {
   const { items, totalAmount, paymentMethod, customerName, customerPhone } = req.body;
+  const hasCustomerDetails = Boolean(customerName?.trim() && customerPhone?.trim());
 
   if (!items || items.length === 0) {
     return res.status(400).json({ message: 'No order items' });
-  }
-
-  if (!customerName || !customerPhone) {
-    return res.status(400).json({ message: 'Customer name and phone are required' });
   }
 
   // 1️⃣ Validate all stocks FIRST (fail fast)
@@ -57,21 +54,24 @@ const addOrderItems = async (req, res) => {
     }
   }
 
-  // 2️⃣ Handle Customer Logic
-  let customer = await Customer.findOne({ phone: customerPhone });
-  if (customer) {
-    customer.name = customerName; // Update name in case it changed
-    customer.visitCount += 1;
-    customer.totalSpent += parseFloat(totalAmount);
-    await customer.save();
-  } else {
-    customer = new Customer({
-      name: customerName,
-      phone: customerPhone,
-      visitCount: 1,
-      totalSpent: parseFloat(totalAmount)
-    });
-    await customer.save();
+  // 2️⃣ Handle Customer Logic only when optional details are provided
+  let customer = null;
+  if (hasCustomerDetails) {
+    customer = await Customer.findOne({ phone: customerPhone.trim() });
+    if (customer) {
+      customer.name = customerName.trim(); // Update name in case it changed
+      customer.visitCount += 1;
+      customer.totalSpent += parseFloat(totalAmount);
+      await customer.save();
+    } else {
+      customer = new Customer({
+        name: customerName.trim(),
+        phone: customerPhone.trim(),
+        visitCount: 1,
+        totalSpent: parseFloat(totalAmount)
+      });
+      await customer.save();
+    }
   }
 
   // 3️⃣ Deduct stock — float-safe subtraction
@@ -88,9 +88,9 @@ const addOrderItems = async (req, res) => {
   // 5️⃣ Create order
   const order = new Order({
     billNumber,
-    customer: customer._id,
-    customerName,
-    customerPhone,
+    customer: customer?._id,
+    customerName: hasCustomerDetails ? customerName.trim() : undefined,
+    customerPhone: hasCustomerDetails ? customerPhone.trim() : undefined,
     items: items.map(i => ({
       ...i,
       quantity: parseFloat(i.quantity),

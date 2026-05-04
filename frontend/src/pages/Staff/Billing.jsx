@@ -162,7 +162,6 @@ const Billing = () => {
   /* ── generate bill ── */
   const handleGenerateBill = async () => {
     if (cart.length === 0) return toast.warning('Cart is empty');
-    if (!customerPhone || !customerName) return toast.warning('Customer details are required');
     
     // validate
     const invalidItem = cart.find(x => !parseFloat(x.quantity) || parseFloat(x.quantity) <= 0);
@@ -174,13 +173,18 @@ const Billing = () => {
 
     try {
       const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
-      const { data } = await axios.post(`${BASE_URL}/api/orders`, {
+      const orderPayload = {
         items: itemsToSend,
         totalAmount,
         paymentMethod,
-        customerName,
-        customerPhone
-      }, config);
+      };
+
+      if (customerName.trim() && customerPhone.trim()) {
+        orderPayload.customerName = customerName.trim();
+        orderPayload.customerPhone = customerPhone.trim();
+      }
+
+      const { data } = await axios.post(`${BASE_URL}/api/orders`, orderPayload, config);
 
       generatePDF(data);
       toast.success('Bill Generated & Stock Updated!');
@@ -200,10 +204,15 @@ const Billing = () => {
     doc.setFontSize(10);
     doc.text(`Bill No: ${orderData.billNumber}`, 14, 28);
     doc.text(`Date: ${new Date().toLocaleString()}`, 14, 34);
-    doc.text(`Customer: ${customerName} (${customerPhone})`, 14, 40);
-    doc.text(`Payment: ${paymentMethod}`, 14, 46);
+    let y = 50;
+    if (customerName.trim() && customerPhone.trim()) {
+      doc.text(`Customer: ${customerName.trim()} (${customerPhone.trim()})`, 14, 40);
+      doc.text(`Payment: ${paymentMethod}`, 14, 46);
+      y = 56;
+    } else {
+      doc.text(`Payment: ${paymentMethod}`, 14, 40);
+    }
 
-    let y = 56;
     doc.setFontSize(11);
     doc.text('Item',     14, y);
     doc.text('Qty',      110, y);
