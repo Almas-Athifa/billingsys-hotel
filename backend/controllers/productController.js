@@ -5,6 +5,7 @@ const cloudinary = require('../config/cloudinary');
 
 const UPLOADS_DIR  = path.join(__dirname, '../uploads');
 const DEFAULT_IMG  = '/uploads/default.jpg';
+const CLOUDINARY_PRODUCT_FOLDER = 'billingsystem/products';
 
 /* ─────────────────────────────────────────────────
    Helper: normalize product name → filename
@@ -28,6 +29,44 @@ const findLocalImage = (baseName) => {
   return null;
 };
 
+const findCloudinaryImage = async (baseName) => {
+  if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+    return null;
+  }
+
+  const folderExpression = `(folder=${CLOUDINARY_PRODUCT_FOLDER} OR asset_folder=${CLOUDINARY_PRODUCT_FOLDER})`;
+  const nameExpression = [
+    `public_id:${CLOUDINARY_PRODUCT_FOLDER}/${baseName}*`,
+    `public_id:${baseName}*`,
+    `filename:${baseName}*`,
+    `display_name:${baseName}*`,
+    `tags:${baseName}`,
+  ].join(' OR ');
+
+  const result = await cloudinary.search
+    .expression(`resource_type:image AND ${folderExpression} AND (${nameExpression})`)
+    .sort_by('created_at', 'desc')
+    .max_results(1)
+    .execute();
+
+  return result.resources?.[0]?.secure_url || null;
+};
+
+const findSuggestedImage = async (name) => {
+  const baseName = toFileName(name);
+  const cloudinaryPath = await findCloudinaryImage(baseName);
+  if (cloudinaryPath) {
+    return { source: 'cloudinary', imagePath: cloudinaryPath };
+  }
+
+  const localPath = findLocalImage(baseName);
+  if (localPath) {
+    return { source: 'local', imagePath: localPath };
+  }
+
+  return null;
+};
+
 const uploadToCloudinary = (file, productName) => {
   if (!file?.buffer) return Promise.resolve(null);
 
@@ -35,7 +74,7 @@ const uploadToCloudinary = (file, productName) => {
     const publicId = `${toFileName(productName)}-${Date.now()}`;
     const stream = cloudinary.uploader.upload_stream(
       {
-        folder: 'billingsystem/products',
+        folder: CLOUDINARY_PRODUCT_FOLDER,
         public_id: publicId,
         resource_type: 'image',
       },
@@ -62,22 +101,26 @@ const getProducts = async (req, res) => {
 
 /* ──────────────────────────────────────────────────────
    GET /api/products/check-image?name=<productName>
-   Checks local uploads folder for a matching image.
+   Checks Cloudinary/local uploads for a matching image.
    Returns: { found: true/false, imagePath: '...' }
 ──────────────────────────────────────────────────────── */
-const checkImageExists = (req, res) => {
-  const { name } = req.query;
-  if (!name || name.trim().length < 2) {
-    return res.json({ found: false, imagePath: DEFAULT_IMG });
-  }
+const checkImageExists = async (req, res) => {
+  try {
+    const { name } = req.query;
+    if (!name || name.trim().length < 2) {
+      return res.json({ found: false, imagePath: DEFAULT_IMG });
+    }
 
-  const baseName  = toFileName(name);
-  const localPath = findLocalImage(baseName);
+    const suggestedImage = await findSuggestedImage(name);
 
-  if (localPath) {
-    return res.json({ found: true, imagePath: localPath });
+    if (suggestedImage) {
+      return res.json({ found: true, ...suggestedImage });
+    }
+
+    res.json({ found: false, imagePath: DEFAULT_IMG });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
-  res.json({ found: false, imagePath: DEFAULT_IMG });
 };
 
 /* ──────────────────────────────────────────────────────
@@ -110,13 +153,11 @@ const createProduct = async (req, res) => {
   try {
     const { name, price, category, quantity, unit } = req.body;
 
-    // 1️⃣ Try local folder match first
-    const baseName  = toFileName(name);
-    const localPath = findLocalImage(baseName);
+    const suggestedImage = await findSuggestedImage(name);
 
     let image;
-    if (localPath) {
-      image = localPath;                              // auto-assigned
+    if (suggestedImage) {
+      image = suggestedImage.imagePath;
     } else if (req.file) {
       image = await uploadToCloudinary(req.file, name); // manual upload
     } else {
@@ -149,8 +190,8 @@ const updateProduct = async (req, res) => {
     if (req.file) {
       product.image = await uploadToCloudinary(req.file, product.name);
     } else if (name) {
-      const local = findLocalImage(toFileName(name));
-      if (local) product.image = local;
+      const suggestedImage = await findSuggestedImage(name);
+      if (suggestedImage) product.image = suggestedImage.imagePath;
     }
 
     const updated = await product.save();
