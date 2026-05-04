@@ -14,6 +14,7 @@ const Billing = () => {
   const [paymentMethod, setPaymentMethod] = useState('Cash');
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerName, setCustomerName]   = useState('');
+  const [lastBillId, setLastBillId] = useState(null);
 
   const navigate  = useNavigate();
   const userInfo  = JSON.parse(localStorage.getItem('userInfo'));
@@ -186,6 +187,7 @@ const Billing = () => {
       const { data } = await axios.post(`${BASE_URL}/api/orders`, orderPayload, config);
 
       toast.success('Bill saved successfully!');
+      setLastBillId(data._id);
       setCart([]);
       setCustomerName('');
       setCustomerPhone('');
@@ -401,6 +403,14 @@ const Billing = () => {
           >
             <Printer size={18} /> Generate Bill
           </button>
+          {lastBillId && (
+            <button
+              onClick={() => navigate('/staff/bills', { state: { latestBillId: lastBillId } })}
+              className="w-full bg-blue-50 hover:bg-blue-100 text-blue-700 py-2.5 rounded-xl font-semibold"
+            >
+              View Saved Bill
+            </button>
+          )}
         </div>
       </div>
     </div>

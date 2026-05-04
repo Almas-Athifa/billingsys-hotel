@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { ArrowLeft, FileText, LogOut, Search } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -10,15 +11,25 @@ const StaffBills = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [paymentFilter, setPaymentFilter] = useState('All');
   const [dateFilter, setDateFilter] = useState('All');
+  const [loadError, setLoadError] = useState('');
   const navigate = useNavigate();
   const location = useLocation();
   const userInfo = JSON.parse(localStorage.getItem('userInfo'));
 
   useEffect(() => {
     const fetchOrders = async () => {
-      const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
-      const { data } = await axios.get(`${BASE_URL}/api/orders/my`, config);
-      setOrders(data);
+      try {
+        setLoadError('');
+        const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
+        const { data } = await axios.get(`${BASE_URL}/api/orders/my`, config);
+        setOrders(data);
+      } catch (error) {
+        const message = error.response?.status === 404
+          ? 'Bills API is not available yet. Redeploy the Render backend.'
+          : error.response?.data?.message || 'Failed to load bills';
+        setLoadError(message);
+        toast.error(message);
+      }
     };
     fetchOrders();
   }, [userInfo.token]);
@@ -102,6 +113,12 @@ const StaffBills = () => {
         </div>
 
         <div className="space-y-4">
+          {loadError && (
+            <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4">
+              {loadError}
+            </div>
+          )}
+
           {filteredOrders.map(order => (
             <div key={order._id} className={`bg-white rounded-xl border p-5 ${order._id === latestBillId ? 'ring-2 ring-blue-500' : ''}`}>
               <div className="flex flex-wrap items-start justify-between gap-3 border-b pb-3 mb-3">
