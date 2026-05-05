@@ -105,10 +105,14 @@ const StaffBills = () => {
             />
           </div>
           <select value={paymentFilter} onChange={(e) => setPaymentFilter(e.target.value)} className="border rounded-lg px-3 py-2.5 bg-white">
-            {['All', 'Cash', 'UPI', 'Card'].map(value => <option key={value}>{value}</option>)}
+            <option value="All">All Payment Methods</option>
+            {['Cash', 'UPI', 'Card'].map(value => <option key={value} value={value}>{value}</option>)}
           </select>
           <select value={dateFilter} onChange={(e) => setDateFilter(e.target.value)} className="border rounded-lg px-3 py-2.5 bg-white">
-            {['All', 'Today', '7 Days', '30 Days'].map(value => <option key={value}>{value}</option>)}
+            <option value="All">All Dates</option>
+            <option value="Today">Today</option>
+            <option value="7 Days">Last 7 Days</option>
+            <option value="30 Days">Last 30 Days</option>
           </select>
         </div>
 
